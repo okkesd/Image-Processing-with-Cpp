@@ -129,7 +129,7 @@ vector<Dataset> read_cifar_bin(string file_path){
 
 // to compile and run: g++ read_cifar_images.cpp -o read_cifar_images -I/usr/local/include/opencv4 -lopencv_core -lopencv_imgcodecs -lopencv_imgproc -lopencv_highgui  && ./read_cifar_images
 
-int main(){
+/*int main(){
     string bin_path = "/home/debianokkes/Downloads/cifar-10-batches-bin/data_batch_1.bin";
 
     Dataset image_obj = read_specific_cifar_image(bin_path, 0);
@@ -141,4 +141,4 @@ int main(){
     cout << data.size() << endl;
     imwrite("five_hundert_from_dataset.png", data[500].image);
     return 0;
-}
+}*/
