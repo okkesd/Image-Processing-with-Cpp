@@ -12,37 +12,37 @@ using namespace std;
 using namespace cv;
 //using namespace fstream;
 
-// to compile and run: g++ open_image.cpp -o open_image && ./open_image
+Mat read_image_gray(string file_path){
+    /*
+        Reads a given image with opencv and returns a Mat
+    */
+
+    Mat image = imread(file_path, IMREAD_GRAYSCALE);
+    if (image.empty()){
+        cout << "Image read failed in read_image_gray" << endl;
+        return Mat();
+    }
+    cout << "Image read" << endl;
+    
+    return image;
+}
+
+// to compile and run: g++ open_image.cpp -o open_image -I/usr/local/include/opencv4 -lopencv_core -lopencv_imgcodecs && ./open_image
+
 int main(){
     string file_name = "image1.png";
-    //ifstream image(file_name); // , ios::in
-    Mat image = cv::imread(file_name, IMREAD_GRAYSCALE);
-    cout << "read"<< endl;
+    
+    // Read image as gray
+    Mat image = read_image_gray(file_name);
+    
     if (!image.empty()){
 
-        for (int r = 600; r<700; r++){
-            uchar* row = image.ptr<uchar>(r);
-            for (int c = 600; c<700; c++){
-
-                cout << (int)image.at<uchar>(r,c) << " ";
-                if (image.at<uchar>(r,c) > 205){
-                    image.at<uchar>(r,c) = 50;
-                } else {
-                    image.at<uchar>(r,c) += 50;
-                }
-                
-                //cout << (int)row[c] << " ";
-            }
-            cout << endl;
-        }
-
+        // save gray image
         imwrite("out.png", image);
-        
-        
-        
-        //image.close();
     } else {
 
+        cout << "Image read failed" << endl;
+        exit(1);
     }
     
     return 0;
