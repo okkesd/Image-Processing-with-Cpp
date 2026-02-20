@@ -7,6 +7,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
 #include "opencv2/imgcodecs.hpp"
+#include "open_image.h"
 
 using namespace std;
 using namespace cv;
@@ -29,7 +30,7 @@ Mat read_image_gray(string file_path){
 
 // to compile and run: g++ open_image.cpp -o open_image -I/usr/local/include/opencv4 -lopencv_core -lopencv_imgcodecs && ./open_image
 
-int main(){
+/*int main(){
     string file_name = "image1.png";
     
     // Read image as gray
@@ -46,4 +47,4 @@ int main(){
     }
     
     return 0;
-}
+}*/
