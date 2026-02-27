@@ -5,11 +5,14 @@
 #include <string>
 #include <cassert>
 #include <thread>
-#include "read_cifar_images.cpp"
+#include "utils.h"
+#include "read_cifar_images.h"
 #include "opencv2/opencv.hpp"
 #include <chrono>
 
+
 using namespace std;
+using namespace cv;
 
 class NearestNeighbour{
     private: 
@@ -59,19 +62,25 @@ class NearestNeighbour{
             return mapped_data.size() > 0 ?  1 : 0;
         }
 
-        double compute_L1_distance(Mat first, Mat second) const {
+        double compute_L1_distance(const Mat& first, const Mat& second) const {
 
+            second.reshape(1,1);
             assert(first.rows == second.rows);
             assert(first.cols == second.cols);
+            assert(first.type() == second.type());
 
             // let CV handle the parallelization
             Mat diffs;
             absdiff(first, second, diffs);
-
             Scalar s = sum(diffs);
 
+            double total = 0.0;
+            for (int i = 0; i<first.channels(); i++){
+                total += s[i];
+            }
+
             //cout << "dist is: " << dist/image_pixel_count << endl;
-            return ((s[0] + s[1] + s[2])/image_pixel_count);
+            return total/image_pixel_count;
         }
 
     public:
@@ -86,6 +95,9 @@ class NearestNeighbour{
             cout << "image pixel count: " << data[0].image.total() << " (" << data[0].image.size() << ")" << endl;
 
             image_pixel_count = data[0].image.total();
+
+            // apply preproessing
+            preprocess_data(&data);
 
             int result = ProcessData();
             if (!result) {cout << "error occured in mapping data, aborting" << endl; exit(1);}
@@ -104,11 +116,12 @@ class NearestNeighbour{
         int classify(const Mat& test_image) const {
             /*
                 Classifies given image with L1 distance, returns the lowest distance label
+                // TODO: Recheck if this still works
             */
 
             // lowest label and its value, we'll update it after computing every label
             int lowest_label = 11;
-            double lowest_value = 9999999999999999;
+            double lowest_value = numeric_limits<double>::max();;
             
             for (int label = 0; label<mapped_data.size(); label++){
                 double distance = 0.0;
@@ -127,6 +140,10 @@ class NearestNeighbour{
                     double result = compute_L1_distance(image, test_image);
                     distance += result;
                 }
+
+                // average the distance to the sample size, 
+                // so that classes with larger samples don't get higher distance due to their sample count
+                distance /= samples_vec.size();
 
                 // update lowests
                 if (distance < lowest_value){lowest_value = distance; lowest_label = data_label;}
@@ -152,9 +169,10 @@ void custom_test_thread(NearestNeighbour* nn, vector<Dataset>* test, int start, 
     *true_count = local_true;
 }
 
-// TODO: Apply preprocessing steps such as normalization, zero-mean etc.
 
-// to compile and run: g++ ./Nearest_Neighbour.cpp -o Nearest_Neighbour -I/usr/local/include/opencv4 -lopencv_core && ./Nearest_Neighbour
+// TODO: Apply preprocessing steps from utils.cpp
+
+// to compile and run: g++ ./Nearest_Neighbour.cpp utils.cpp -o Nearest_Neighbour -I/usr/local/include/opencv4 -lopencv_core && ./Nearest_Neighbour
 
 int main(){
 
@@ -162,6 +180,8 @@ int main(){
 
     string data_path = "/home/debianokkes/Downloads/cifar-10-batches-bin/data_batch_1.bin";
     vector<Dataset> data = read_cifar_bin(data_path);
+
+    cout << data[0].image.size() << " - " << data[0].image.total() << endl;
 
     // concat other data 
     for (int i = 2; i<6; i++){
@@ -171,10 +191,7 @@ int main(){
         data.insert(data.end(), data_local.begin(), data_local.end());
     }
 
-    // split train test
-    /*size_t split = data.size() * 0.9;
-    vector<Dataset> train(data.begin(), data.begin() + split);
-    vector<Dataset> test(data.begin() + split, data.end());*/
+    // get the test data
     string test_path = "/home/debianokkes/Downloads/cifar-10-batches-bin/test_batch.bin";
     vector<Dataset> test = read_cifar_bin(test_path);
 
@@ -188,11 +205,13 @@ int main(){
 
     if (multi_threading == 1){ // apply multithreaded way
     
-        int thread_count = 14; // 17 seconds
+        // adjust thread count
+        int thread_count = 14; // 17 seconds thread::hardware_concurrency() | 
         int proportion = test.size() / thread_count;
     
-        cout << "proportion: " << proportion << endl;
+        cout << "Threads: " << thread_count << " Proportion per thread: " << proportion << endl;
     
+        // hold threads and their results in vec
         vector<int> true_count_vec(thread_count);
         vector<thread> all_threads;
     

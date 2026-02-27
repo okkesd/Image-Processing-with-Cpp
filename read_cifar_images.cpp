@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <fstream>
 #include <string.h>
-#include <vector>
+//#include <vector>
+#include "read_cifar_images.h"
 
 #include <iostream>
 #include <sstream>
@@ -15,7 +16,7 @@ using namespace std;
 using namespace cv;
 
 
-struct Dataset{
+/*struct Dataset{
     int label;
     Mat image;
 
@@ -23,7 +24,7 @@ struct Dataset{
         this->label = label;
         this->image = image;
     };
-};
+};*/
 
 Dataset read_specific_cifar_image(string file_path, int image_order){
     /*
